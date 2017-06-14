@@ -172,6 +172,7 @@ void InitHack(){
 		AddOrModCvar(psKeyName2);
 		psKeyName2 += strlen(psKeyName2) + 1;
 	}
+	ini_browse(Callback,NULL,g_settingsFileName);
 	g_pEngine->pfnAddCommand("set_ticket", Set_Ticket);
 	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
 	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.7\n", BuildInfo.Build);
@@ -307,7 +308,7 @@ void AddOrModCvar(const string line){
 		else if (Tag == "SERVERSIDE") { temp.mode = cvar_open; }
 		else { /* UNKNOWN MODE WE SHOULD NOTIFY */ };
 
-		// ˆùåì value
+		// ÂˆÃ¹Ã¥Ã¬ value
 		if (end != string::npos){
 			size_t q_start = line.find("\"", end);
 			if (q_start != string::npos)
