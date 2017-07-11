@@ -233,7 +233,7 @@ void HUD_Frame(double time){
 	if (!FirstFrame){
 		g_Screen.iSize = sizeof(SCREENINFO);offset.HLType = g_Studio.IsHardware() + 1;offset.ConsoleColorInitalize();
 		offset.GetGameInfo(&BuildInfo);HookUserMessages();  HookEngineMessages();InitHack();FirstFrame = true;
-		HookEventMessages();
+//		HookEventMessages();
 	}
 	g_Engine.pfnGetScreenInfo(&g_Screen);
 	g_Client.HUD_Frame(time);
