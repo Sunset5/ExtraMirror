@@ -239,22 +239,25 @@ DWORD cOffset::FindSVCMessages()
 	return (DWORD)pEngineMsgBase;
 }
 #define equali !stricmp
-DWORD cOffset::FindEventMsgBase()
+DWORD cOffset::FindEventMsgBase ( )
 {
-	DWORD PatternAddress = FindPattern(OFF_EVENT_MSG_BASE, HwBase, HwEnd, 0);
+	DWORD PatternAddress = FindPattern ( OFF_EVENT_MSG_BASE, HwBase, HwEnd, 0 );
 	DWORD ReferenAddress;
-	if (BuildInfo.Build<6027){
-		ReferenAddress = FindReference(HwBase, HwEnd, PatternAddress) - 0x06;
+	if ( BuildInfo.Build >= 7561 ) {
+		ReferenAddress = FindReference ( HwBase, HwEnd, PatternAddress ) - 0x1B;
 	}
-	else { ReferenAddress = FindReference(HwBase, HwEnd, PatternAddress) - 0x07; }
-	 
-	if (FarProc(ReferenAddress, HwBase, HwEnd))
+	else if ( BuildInfo.Build<6027 ) {
+		ReferenAddress = FindReference ( HwBase, HwEnd, PatternAddress ) - 0x06;
+	}
+	else { ReferenAddress = FindReference ( HwBase, HwEnd, PatternAddress ) - 0x07; }
+
+	if ( FarProc ( ReferenAddress, HwBase, HwEnd ) )
 	{
-		Error(OFF_EVENT_MSG_ERROR);
+		Error ( OFF_EVENT_MSG_ERROR );
 		return 0;
 	}
 
-	return *(PDWORD)(*(PDWORD)ReferenAddress);
+	return *( PDWORD )( *( PDWORD )ReferenAddress );
 }
 void cOffset::ConsoleColorInitalize()
 {

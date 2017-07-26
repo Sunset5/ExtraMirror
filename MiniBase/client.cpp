@@ -175,7 +175,7 @@ void InitHack(){
 	ini_browse(Callback,NULL,g_settingsFileName);
 	g_pEngine->pfnAddCommand("set_ticket", Set_Ticket);
 	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.7\n", BuildInfo.Build);
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.9\n", BuildInfo.Build);
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
@@ -233,7 +233,7 @@ void HUD_Frame(double time){
 	if (!FirstFrame){
 		g_Screen.iSize = sizeof(SCREENINFO);offset.HLType = g_Studio.IsHardware() + 1;offset.ConsoleColorInitalize();
 		offset.GetGameInfo(&BuildInfo);HookUserMessages();  HookEngineMessages();InitHack();FirstFrame = true;
-//		HookEventMessages();
+		HookEventMessages();
 	}
 	g_Engine.pfnGetScreenInfo(&g_Screen);
 	g_Client.HUD_Frame(time);
@@ -308,7 +308,7 @@ void AddOrModCvar(const string line){
 		else if (Tag == "SERVERSIDE") { temp.mode = cvar_open; }
 		else { /* UNKNOWN MODE WE SHOULD NOTIFY */ };
 
-		// ùåì value
+		// 
 		if (end != string::npos){
 			size_t q_start = line.find("\"", end);
 			if (q_start != string::npos)
