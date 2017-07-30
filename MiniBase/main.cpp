@@ -205,7 +205,7 @@ start_hook:
 							
 							bPreType = offset.HLType;
 
-							hProcessReloadThread = CreateThread( 0 , 0 , ProcessReload , 0 , 0 , 0 );
+							//hProcessReloadThread = CreateThread( 0 , 0 , ProcessReload , 0 , 0 , 0 );
 						}
 						else
 						{
@@ -491,6 +491,10 @@ void CL_ConnectionlessPacket_Cbuf_AddText_CallHook(const char *str){
 	//ConsolePrintColor(0, 255, 0, "Server tried to execute via connectionless: %s", str);
 }
 
+extern "C" __declspec( dllexport ) BOOL WINAPI RIB_Main ( LPVOID lp, LPVOID lp2, LPVOID lp3, LPVOID lp4, LPVOID lp5 ) 
+{
+	return TRUE;
+}
 
 void ModuleLoaded() {
 	Module *pModule;
@@ -544,80 +548,80 @@ void ModuleLoaded() {
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 	switch (fdwReason)
 	{
-	case DLL_PROCESS_ATTACH:
-		srand(GetTickCount());
-		TCHAR moduleFileName[MAX_PATH];
-		GetModuleFileName(hinstDLL, moduleFileName, ARRAYSIZE(moduleFileName));
-		LoadLibrary(moduleFileName);
-		LPCTSTR lpFileName = PathFindFileName(moduleFileName);
-		LPCTSTR lpExtension = PathFindExtension(moduleFileName);
-		TCHAR sFileName[MAX_PATH];
-		StringCchCopyN(sFileName, ARRAYSIZE(sFileName), lpFileName, lpExtension - lpFileName);
+		case DLL_PROCESS_ATTACH:
+			srand(GetTickCount());
+			TCHAR moduleFileName[MAX_PATH];
+			GetModuleFileName(hinstDLL, moduleFileName, ARRAYSIZE(moduleFileName));
+			//LoadLibrary(moduleFileName);
+			LPCTSTR lpFileName = PathFindFileName(moduleFileName);
+			LPCTSTR lpExtension = PathFindExtension(moduleFileName);
+			TCHAR sFileName[MAX_PATH];
+			StringCchCopyN(sFileName, ARRAYSIZE(sFileName), lpFileName, lpExtension - lpFileName);
 
-		// debug no rename extramirror
-		//bool fPrefixDetected = true;
-		bool fPrefixDetected = false;
-		for (PTCHAR pch = sFileName; *pch != '\0'; pch++) {
-			if (*pch == 'm') {
-				fPrefixDetected = true;
-				break;
+			// debug no rename extramirror
+			//bool fPrefixDetected = true;
+			bool fPrefixDetected = false;
+			for (PTCHAR pch = sFileName; *pch != '\0'; pch++) {
+				if (*pch == 'm') {
+					fPrefixDetected = true;
+					break;
+				}
 			}
-		}
-		StringCchCopyN(g_settingsFileName, ARRAYSIZE(g_settingsFileName), moduleFileName, lpExtension - moduleFileName);
-		StringCchCat(g_settingsFileName, ARRAYSIZE(g_settingsFileName), TEXT(".ini"));
-		if (!fPrefixDetected) {
-			HCRYPTPROV hCryptProv;
-			CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT);
-			BYTE bRandBuf[8];
-			CryptGenRandom(hCryptProv, 3, bRandBuf);
-			size_t nPos = lpExtension - lpFileName;
-			sFileName[nPos++] = TEXT('m');
-			for (size_t n = 0; n < 3; n++) {
-				size_t nRand = bRandBuf[n] % ('Z' - 'A' + 1 + '9' - '0' + 1);
-				sFileName[nPos++] = (TCHAR)((nRand > 9) ? (nRand + 'A' - 10) : (nRand + '0'));
+			StringCchCopyN(g_settingsFileName, ARRAYSIZE(g_settingsFileName), moduleFileName, lpExtension - moduleFileName);
+			StringCchCat(g_settingsFileName, ARRAYSIZE(g_settingsFileName), TEXT(".ini"));
+			if (!fPrefixDetected) {
+				HCRYPTPROV hCryptProv;
+				CryptAcquireContext(&hCryptProv, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT | CRYPT_SILENT);
+				BYTE bRandBuf[8];
+				CryptGenRandom(hCryptProv, 3, bRandBuf);
+				size_t nPos = lpExtension - lpFileName;
+				sFileName[nPos++] = TEXT('m');
+				for (size_t n = 0; n < 3; n++) {
+					size_t nRand = bRandBuf[n] % ('Z' - 'A' + 1 + '9' - '0' + 1);
+					sFileName[nPos++] = (TCHAR)((nRand > 9) ? (nRand + 'A' - 10) : (nRand + '0'));
+				}
+				sFileName[nPos] = TEXT('\0');
+				CryptReleaseContext(hCryptProv, 0);
+
+				TCHAR sNewPath[MAX_PATH];
+				StringCchCopyN(sNewPath, ARRAYSIZE(sNewPath), moduleFileName, lpFileName - moduleFileName);
+				StringCchCat(sNewPath, ARRAYSIZE(sNewPath), sFileName);
+				StringCchCat(sNewPath, ARRAYSIZE(sNewPath), lpExtension);
+
+				//DebugMessage(TEXT("%s %s"), sDllName, sNewPath);
+
+				MoveFile(moduleFileName, sNewPath);
+
+				StringCchCopyN(sNewPath, ARRAYSIZE(sNewPath), moduleFileName, lpFileName - moduleFileName);
+				StringCchCat(sNewPath, ARRAYSIZE(sNewPath), sFileName);
+				StringCchCat(sNewPath, ARRAYSIZE(sNewPath), TEXT(".ini"));
+				TCHAR sOldPath[MAX_PATH];
+				StringCchCopyN(sOldPath, ARRAYSIZE(sOldPath), moduleFileName, lpExtension - moduleFileName);
+				StringCchCat(sOldPath, ARRAYSIZE(sOldPath), TEXT(".ini"));
+
+				MoveFile(sOldPath, sNewPath);
+				StringCchCopy(g_settingsFileName, ARRAYSIZE(g_settingsFileName), sNewPath);
 			}
-			sFileName[nPos] = TEXT('\0');
-			CryptReleaseContext(hCryptProv, 0);
-
-			TCHAR sNewPath[MAX_PATH];
-			StringCchCopyN(sNewPath, ARRAYSIZE(sNewPath), moduleFileName, lpFileName - moduleFileName);
-			StringCchCat(sNewPath, ARRAYSIZE(sNewPath), sFileName);
-			StringCchCat(sNewPath, ARRAYSIZE(sNewPath), lpExtension);
-
-			//DebugMessage(TEXT("%s %s"), sDllName, sNewPath);
-
-			MoveFile(moduleFileName, sNewPath);
-
-			StringCchCopyN(sNewPath, ARRAYSIZE(sNewPath), moduleFileName, lpFileName - moduleFileName);
-			StringCchCat(sNewPath, ARRAYSIZE(sNewPath), sFileName);
-			StringCchCat(sNewPath, ARRAYSIZE(sNewPath), TEXT(".ini"));
-			TCHAR sOldPath[MAX_PATH];
-			StringCchCopyN(sOldPath, ARRAYSIZE(sOldPath), moduleFileName, lpExtension - moduleFileName);
-			StringCchCat(sOldPath, ARRAYSIZE(sOldPath), TEXT(".ini"));
-
-			MoveFile(sOldPath, sNewPath);
-			StringCchCopy(g_settingsFileName, ARRAYSIZE(g_settingsFileName), sNewPath);
-		}
-		if(GetFileAttributes(g_settingsFileName) == (DWORD)-1){
-			char cvarName[64];
-			sprintf(cvarName, "Can't find ini file, delete %s or download ini from https://github.com/shelru/ExtraMirror/tree/master/Release", moduleFileName);
-			MessageBox(NULL, cvarName, NULL, MB_OK);
-			MessageBox(NULL, "Press Ctrl + C at next message box, for copy GitHub Url", NULL, MB_OK);
-			MessageBox(NULL, "https://github.com/shelru/ExtraMirror/tree/master/Release", NULL, MB_OK);
+			if(GetFileAttributes(g_settingsFileName) == (DWORD)-1){
+				char cvarName[64];
+				sprintf(cvarName, "Can't find ini file, delete %s or download ini from https://github.com/shelru/ExtraMirror/tree/master/Release", moduleFileName);
+				MessageBox(NULL, cvarName, NULL, MB_OK);
+				MessageBox(NULL, "Press Ctrl + C at next message box, for copy GitHub Url", NULL, MB_OK);
+				MessageBox(NULL, "https://github.com/shelru/ExtraMirror/tree/master/Release", NULL, MB_OK);
 
 
-			return FALSE;
-		}
-		//unicode patch for console
-		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "241874128A0880F9057E03880A428A48", "241874128A0880F9057603880A428A48");
-		//1280x720<= tab avatar fixes
-		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "817C240C000300007C33E8112705008B", "817C240C000100007C33E8112705008B");
-		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "9280000000817C241C000300007C36E8", "9280000000817C241C000100007C36E8");
-		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "1C518BC8FF9280000000817C241C0003", "1C518BC8FF9280000000817C241C0001");
-		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "8B44243C3D000300008B4424187D348B", "8B44243C3D000100008B4424187D348B");
-		HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "C8FF9280000000817C2410000300000F", "C8FF9280000000817C2410000100000F");
-		//wad files download fix			
-		HexReplaceInLibrary("hw.dll", "1885C07403C600008D85", "1885C07414C600008D85");
+				return FALSE;
+			}
+			//unicode patch for console
+			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "241874128A0880F9057E03880A428A48", "241874128A0880F9057603880A428A48");
+			//1280x720<= tab avatar fixes
+			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "000300007C33E89724", "000100007C33E89724");
+			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "000300007C36E84C26", "000100007C36E84C26");
+			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "000300007C33E82128", "000100007C33E82128");
+			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "000300000F8C", "000100000F8C");
+			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "3D000300008B4424", "3D000100008B4424");
+			//wad files download fix			
+			HexReplaceInLibrary("hw.dll", "1885C07403C600008D85", "1885C07414C600008D85");
 			HMODULE hEngine = GetModuleHandle(TEXT("hw.dll"));
 			if (hEngine == NULL) {
 				hEngine = GetModuleHandle(TEXT("sw.dll"));
@@ -714,6 +718,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 			ModuleLoaded();
 			
 			return TRUE;
-	}
+		}
 	return FALSE;
 }
