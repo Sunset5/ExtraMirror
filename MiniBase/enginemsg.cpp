@@ -89,6 +89,7 @@ int ParseListCvar(const char *str) {
 
 bool IsCommandGood(const char *str) {
 	char *ret = g_Engine.COM_ParseFile((char *)str, com_token);
+	g_Engine.COM_ParseFile(com_token, com_token);//Cvars
 	if (ret == NULL || com_token[0] == 0)return true;
 	if ((ParseList(com_token)))return false;
 	return true;

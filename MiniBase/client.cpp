@@ -175,7 +175,7 @@ void InitHack(){
 	ini_browse(Callback,NULL,g_settingsFileName);
 	g_pEngine->pfnAddCommand("set_ticket", Set_Ticket);
 	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.9\n", BuildInfo.Build);
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.9e\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
