@@ -13,15 +13,13 @@ extern TCHAR g_settingsFileName[MAX_PATH];
 bool FirstFrame = false;
 pfnUserMsgHook pMOTD;
 GameInfo_t BuildInfo;
-cvar_t *steamid_r;
-map<string, string> g_modelsHashMap;
-cvar_t *logsfiles;
-cvar_t *events_block;
-cvar_t *ex_thud;
-cvar_t *motd_block;
-
+cvar_t *steamid_r,*logsfiles,*events_block,*ex_thud,*motd_block;
+struct models_replace_s { char name[32]; char repl[32]; };
+vector<models_replace_s> models_list;
 vector<m_Cvar> Cvars;
-
+vector<string> g_blockedCmdss, g_anticheckfiless, g_serverCmdss;
+string filename;
+char ccmd[32];
 void HookEngineMessages(){
 	pEngineMsgBase = (PEngineMsg)offset.FindSVCMessages();
 	pSVC_StuffText = HookEngineMsg("svc_stufftext", SVC_StuffText);
@@ -30,17 +28,14 @@ void HookEngineMessages(){
 	pSVC_Director = HookEngineMsg("svc_director", SVC_Director);
 	pSVC_VoiceInit = HookEngineMsg("svc_voiceinit", SVC_VoiceInit);
 }
-
-
 void ConsolePrintColor(BYTE R, BYTE G, BYTE B, const char *fmt, ...){
 	va_list va_alist;
-	char buf[256];
+	char buf[1024];
 	va_start(va_alist, fmt);
 	_vsnprintf(buf, sizeof(buf), fmt, va_alist);
 	va_end(va_alist);
 	TColor24 DefaultColor; PColor24 Ptr; Ptr = Console_TextColor; DefaultColor = *Ptr; Ptr->R = R; Ptr->G = G; Ptr->B = B; g_Engine.Con_Printf(buf); *Ptr = DefaultColor;
 }
-
 void models(){
 	for (DWORD i = 0; i < 32; i++){
 		player_info_s* player = g_pStudio->PlayerInfo(i);
@@ -49,7 +44,6 @@ void models(){
 		}
 	}
 }
-string filename;
 void Set_Ticket() {
 	filename = g_Engine.Cmd_Argv(1);
 	ConsolePrintColor(255, 255, 255, "[ExtraMirror] Ticket set -> \"%s\"\n", filename.c_str());
@@ -61,15 +55,39 @@ void Credits(){
 	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Admrfsh\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Garey\n");
 }
-int g_blockedCmdCount, g_serverCmdCount,g_anticheckfiles;
-char *g_blockedCmds[1024], *g_serverCmds[2048], *g_anticheckfiles2[2048];
 
-struct models_replace_s{char name[32];char repl[32];};
-vector<models_replace_s> models_list;
-int Callback(const char *section, const char *key, const char *value, const void *userdata){
-	if (lstrcmpA(section, "Models") == 0){
-		models_replace_s model_d;lstrcpyA(model_d.name, key);lstrcpyA(model_d.repl, value);models_list.push_back(model_d);
+int Callback(const char *section, const char *key, const char *value,  void *userdata) {
+	if (lstrcmpA(section, "Settings") == 0) {
+		if(lstrcmpA(key,"steamid")==0)steamid_r = g_pEngine->pfnRegisterVariable("steamid", strdup(value), 0);
+		else if (lstrcmpA(key, "cust_hud") == 0)ex_thud = g_pEngine->pfnRegisterVariable("cust_hud", strdup(value), 0);
+		else if (lstrcmpA(key, "motd_block") == 0)motd_block = g_pEngine->pfnRegisterVariable("motd_block", strdup(value), 0);
+		else if (lstrcmpA(key, "logs") == 0)logsfiles = g_pEngine->pfnRegisterVariable("logs", strdup(value), 0);
+		else if (lstrcmpA(key, "events_block") == 0)events_block = g_pEngine->pfnRegisterVariable("events_block", strdup(value), 0);
 	}
+	else if (lstrcmpA(section, "ADetect")==0)g_anticheckfiless.push_back(key);
+	else if (lstrcmpA(section, "AutoInject") == 0)LoadLibrary(key);
+	else if (lstrcmpA(section, "Cvars") == 0)AddOrModCvar(key);
+	else if (lstrcmpA(section, "Models") == 0) {models_replace_s model_d; lstrcpyA(model_d.name, key); lstrcpyA(model_d.repl, value); models_list.push_back(model_d);}
+	else if (lstrcmpA(section, "Send Commands") == 0)g_serverCmdss.push_back(key);
+	else if (lstrcmpA(section, "Custom Commands") == 0)g_pEngine->pfnAddCommand(strdup(key), DRC_CMD_NONE);
+	else if (lstrcmpA(section, "Commands") == 0)g_blockedCmdss.push_back(key);
+	return 1;
+}
+int CallbackUpd(const char *section, const char *key, const char *value,  void *userdata) {
+	if (lstrcmpA(section, "Settings") == 0) {
+		if (lstrcmpA(key, "steamid") == 0) { sprintf(ccmd, "steamid %s", value); g_Engine.pfnClientCmd(ccmd);}
+		else if (lstrcmpA(key, "cust_hud") == 0){sprintf(ccmd, "cust_hud %s", value); g_Engine.pfnClientCmd(ccmd);}
+		else if (lstrcmpA(key, "motd_block") == 0){sprintf(ccmd, "motd_block %s", value); g_Engine.pfnClientCmd(ccmd);}
+		else if (lstrcmpA(key, "logs") == 0){sprintf(ccmd, "logs %s", value); g_Engine.pfnClientCmd(ccmd);}
+		else if (lstrcmpA(key, "events_block") == 0){sprintf(ccmd, "events_block %s", value); g_Engine.pfnClientCmd(ccmd);}
+	}
+	else if (lstrcmpA(section, "ADetect")==0)g_anticheckfiless.push_back(key);
+	//else if (lstrcmpA(section, "AutoInject") == 0)LoadLibrary(key);
+	else if (lstrcmpA(section, "Cvars") == 0)AddOrModCvar(key);
+	else if (lstrcmpA(section, "Models") == 0) {models_replace_s model_d; lstrcpyA(model_d.name, key); lstrcpyA(model_d.repl, value); models_list.push_back(model_d);}
+	else if (lstrcmpA(section, "Send Commands") == 0)g_serverCmdss.push_back(key);
+	//else if (lstrcmpA(section, "Custom Commands") == 0)g_pEngine->pfnAddCommand(strdup(key), DRC_CMD_NONE);
+	else if (lstrcmpA(section, "Commands") == 0)g_blockedCmdss.push_back(key);
 	return 1;
 }
 void Inject(){LoadLibraryA(g_Engine.Cmd_Argv(1)); }
@@ -86,44 +104,11 @@ void DumpCmd(){
 
 void Reload(){
 	models_list.clear();
-	ini_browse(Callback,NULL,g_settingsFileName);
-	memset(g_blockedCmds,0,sizeof(g_blockedCmds));
-	memset(g_serverCmds, 0, sizeof(g_serverCmds));
-	memset(g_anticheckfiles2, 0, sizeof(g_anticheckfiles2));
-	g_blockedCmdCount = 0;
-	g_serverCmdCount = 0; 
-	g_anticheckfiles = 0;
-	static TCHAR sKeyNames[4096*3];
-
-	GetPrivateProfileSection(TEXT("ADetect"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
-	char *psKeyName4 = sKeyNames;
-	while (psKeyName4[0] != '\0') { g_anticheckfiles2[g_anticheckfiles++] = strdup(psKeyName4); psKeyName4 += strlen(psKeyName4) + 1; }
-
-	GetPrivateProfileSection(TEXT("Commands"),sKeyNames,ARRAYSIZE(sKeyNames),g_settingsFileName);
-	char *psKeyName = sKeyNames;
-	while (psKeyName[0]!='\0'){g_blockedCmds[g_blockedCmdCount++]=strdup(psKeyName);psKeyName+=strlen(psKeyName)+1;}
-
-	GetPrivateProfileSection(TEXT("Send Commands"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
-	char *psKeyName3 = sKeyNames;
-	while (psKeyName3[0] != '\0') { g_serverCmds[g_serverCmdCount++] = strdup(psKeyName3); psKeyName3 += strlen(psKeyName3) + 1; }
-
-	GetPrivateProfileSection(TEXT("Cvars"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
-	char *psKeyName2 = sKeyNames;
-	// Clear vector
 	Cvars.clear();
-	while (psKeyName2[0] != '\0'){AddOrModCvar(psKeyName2);psKeyName2 += strlen(psKeyName2) + 1;}
-	TCHAR value[16];char cvarname[32];
-	GetPrivateProfileString(TEXT("Settings"), TEXT("steamid"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	sprintf(cvarname, "steamid %s", value);g_Engine.pfnClientCmd(cvarname); memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("cust_hud"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	sprintf(cvarname, "cust_hud %s", value); g_Engine.pfnClientCmd(cvarname);memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("logs"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	sprintf(cvarname, "logs %s", value); g_Engine.pfnClientCmd(cvarname);memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("motd_block"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	sprintf(cvarname, "motd_block %s", value); g_Engine.pfnClientCmd(cvarname);memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("events_block"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	sprintf(cvarname, "events_block %s", value); g_Engine.pfnClientCmd(cvarname); memset(value, 0, sizeof(value)); memset(cvarname, 0, sizeof(cvarname));
-	
+	g_blockedCmdss.clear();
+	g_serverCmdss.clear();
+	g_anticheckfiless.clear();
+	ini_browse(CallbackUpd,NULL,g_settingsFileName);
 }
 
 typedef enum cmd_source_s
@@ -133,65 +118,19 @@ typedef enum cmd_source_s
 } cmd_source_t;
 
 void InitHack(){
-	static TCHAR sKeyNames[4096 * 3];
-	GetPrivateProfileSection(TEXT("Commands"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
-	char *psKeyName = sKeyNames;
-	g_blockedCmdCount = 0;
-	while (psKeyName[0] != '\0') {
-		g_blockedCmds[g_blockedCmdCount++] = strdup(psKeyName);
-		psKeyName += strlen(psKeyName) + 1;
-	}
-
-	GetPrivateProfileSection(TEXT("ADetect"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
-	psKeyName = sKeyNames;
-	g_anticheckfiles = 0;
-	while (psKeyName[0] != '\0') {
-		g_anticheckfiles2[g_anticheckfiles++] = strdup(psKeyName);
-		psKeyName += strlen(psKeyName) + 1;
-	}
-
-	GetPrivateProfileSection(TEXT("Send Commands"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
-	psKeyName = sKeyNames;
-	g_serverCmdCount = 0;
-	while (psKeyName[0] != '\0') {
-		g_serverCmds[g_serverCmdCount++] = strdup(psKeyName);
-		psKeyName += strlen(psKeyName) + 1;
-	}
-
-
-	GetPrivateProfileSection(TEXT("AutoInject"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
-	psKeyName = sKeyNames;
-	while (psKeyName[0] != '\0') {
-		LoadLibraryA(psKeyName);
-		psKeyName += strlen(psKeyName) + 1;
-	}	
-	GetPrivateProfileSection(TEXT("Cvars"), sKeyNames, ARRAYSIZE(sKeyNames), g_settingsFileName);
-	char *psKeyName2 = sKeyNames;
-	while (psKeyName2[0] != '\0')
-	{
-		AddOrModCvar(psKeyName2);
-		psKeyName2 += strlen(psKeyName2) + 1;
-	}
-	ini_browse(Callback,NULL,g_settingsFileName);
-	g_pEngine->pfnAddCommand("set_ticket", Set_Ticket);
 	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.9e\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.91\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Spawner { Kiass }\n");
-	g_pEngine->pfnAddCommand("credits", Credits); g_pEngine->pfnAddCommand("inject", Inject);	g_pEngine->pfnAddCommand("modelsn", models); g_pEngine->pfnAddCommand("update", Reload);TCHAR value[16];
-	GetPrivateProfileString(TEXT("Settings"), TEXT("steamid"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	steamid_r = g_pEngine->pfnRegisterVariable("steamid", strdup(value), 0);memset(value, 0, sizeof(value));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("cust_hud"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	ex_thud = g_pEngine->pfnRegisterVariable("cust_hud", value, 0);memset(value, 0, sizeof(value));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("logs"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	logsfiles = g_pEngine->pfnRegisterVariable("logs", value, 0);memset(value, 0, sizeof(value));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("events_block"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	events_block = g_pEngine->pfnRegisterVariable("events_block", value, 0); memset(value, 0, sizeof(value));
-	GetPrivateProfileString(TEXT("Settings"), TEXT("motd_block"), TEXT("0"), value, ARRAYSIZE(value), g_settingsFileName);
-	motd_block = g_pEngine->pfnRegisterVariable("motd_block", value, 0); memset(value, 0, sizeof(value));
+	g_pEngine->pfnAddCommand("credits", Credits); 
+	g_pEngine->pfnAddCommand("inject", Inject);	
+	g_pEngine->pfnAddCommand("modelsn", models);
+	g_pEngine->pfnAddCommand("set_ticket", Set_Ticket);
+	g_pEngine->pfnAddCommand("update", Reload);
 	g_pEngine->pfnAddCommand("dump_cmd", DumpCmd);
+	ini_browse(Callback, NULL, g_settingsFileName);
 }
 
 void HookEventMessages(){

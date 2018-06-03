@@ -1,6 +1,6 @@
 /*  minIni - Multi-Platform INI file parser, suitable for embedded systems
  *
- *  Copyright (c) CompuPhase, 2008-2012
+ *  Copyright (c) CompuPhase, 2008-2017
  *
  *  Licensed under the Apache License, Version 2.0 (the "License"); you may not
  *  use this file except in compliance with the License. You may obtain a copy
@@ -14,14 +14,14 @@
  *  License for the specific language governing permissions and limitations
  *  under the License.
  *
- *  Version: $Id: minIni.h 44 2012-01-04 15:52:56Z thiadmer.riemersma@gmail.com $
+ *  Version: $Id: minIni.h 53 2015-01-18 13:35:11Z thiadmer.riemersma@gmail.com $
  */
 #ifndef MININI_H
 #define MININI_H
 
 #include "minGlue.h"
 
-#if (defined _UNICODE || defined __UNICODE__ || defined UNICODE) && !defined MININI_ANSI
+#if (defined _UNICODE || defined __UNICODE__ || defined UNICODE) && !defined INI_ANSIONLY
   #include <tchar.h>
   #define mTCHAR TCHAR
 #else
@@ -56,8 +56,8 @@ int   ini_putf(const mTCHAR *Section, const mTCHAR *Key, INI_REAL Value, const m
 #endif /* INI_READONLY */
 
 #if !defined INI_NOBROWSE
-typedef int (*INI_CALLBACK)(const mTCHAR *Section, const mTCHAR *Key, const mTCHAR *Value, const void *UserData);
-int  ini_browse(INI_CALLBACK Callback, const void *UserData, const mTCHAR *Filename);
+typedef int (*INI_CALLBACK)(const mTCHAR *Section, const mTCHAR *Key, const mTCHAR *Value, void *UserData);
+int  ini_browse(INI_CALLBACK Callback, void *UserData, const mTCHAR *Filename);
 #endif /* INI_NOBROWSE */
 
 #if defined __cplusplus
@@ -115,31 +115,36 @@ int  ini_browse(INI_CALLBACK Callback, const void *UserData, const mTCHAR *Filen
 #endif
 
 #if ! defined INI_READONLY
-    bool put(const std::string& Section, const std::string& Key, long Value) const
+    bool put(const std::string& Section, const std::string& Key, long Value)
       { return ini_putl(Section.c_str(), Key.c_str(), Value, iniFilename.c_str()) != 0; }
 
-    bool put(const std::string& Section, const std::string& Key, int Value) const
+    bool put(const std::string& Section, const std::string& Key, int Value)
       { return ini_putl(Section.c_str(), Key.c_str(), (long)Value, iniFilename.c_str()) != 0; }
 
-    bool put(const std::string& Section, const std::string& Key, bool Value) const
+    bool put(const std::string& Section, const std::string& Key, bool Value)
       { return ini_putl(Section.c_str(), Key.c_str(), (long)Value, iniFilename.c_str()) != 0; }
 
-    bool put(const std::string& Section, const std::string& Key, const std::string& Value) const
+    bool put(const std::string& Section, const std::string& Key, const std::string& Value)
       { return ini_puts(Section.c_str(), Key.c_str(), Value.c_str(), iniFilename.c_str()) != 0; }
 
-    bool put(const std::string& Section, const std::string& Key, const char* Value) const
+    bool put(const std::string& Section, const std::string& Key, const char* Value)
       { return ini_puts(Section.c_str(), Key.c_str(), Value, iniFilename.c_str()) != 0; }
 
 #if defined INI_REAL
-    bool put(const std::string& Section, const std::string& Key, INI_REAL Value) const
+    bool put(const std::string& Section, const std::string& Key, INI_REAL Value)
       { return ini_putf(Section.c_str(), Key.c_str(), Value, iniFilename.c_str()) != 0; }
 #endif
 
-    bool del(const std::string& Section, const std::string& Key) const
+    bool del(const std::string& Section, const std::string& Key)
       { return ini_puts(Section.c_str(), Key.c_str(), 0, iniFilename.c_str()) != 0; }
 
-    bool del(const std::string& Section) const
+    bool del(const std::string& Section)
       { return ini_puts(Section.c_str(), 0, 0, iniFilename.c_str()) != 0; }
+#endif
+
+#if !defined INI_NOBROWSE
+    bool browse(INI_CALLBACK Callback, void *UserData) const
+      { return ini_browse(Callback, UserData, iniFilename.c_str()) != 0; }
 #endif
 
   private:

@@ -7,11 +7,18 @@
 # Precompiled Headers
 *.gch
 *.pch
+*.ipch
+*.exp
+*.iobj
+*.ipdb
+*.map
 
 # Compiled Dynamic libraries
 *.so
 *.dylib
 *.dll
+*.db
+*.opendb
 
 # Fortran module files
 *.mod
@@ -77,3 +84,4 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+*.tlog

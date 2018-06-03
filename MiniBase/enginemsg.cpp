@@ -2,18 +2,11 @@
 
 #pragma warning(disable:4996)
 int* MSG_ReadCount = nullptr;
-#define equali !stricmp
 int* MSG_CurrentSize = nullptr;
 int* MSG_BadRead = nullptr;
 int MSG_SavedReadCount = 0;
 sizebuf_t* MSG_Buffer = nullptr;
-#define MAX_CMD_LINE 2048
-
-extern int g_blockedCmdCount;
-extern char *g_blockedCmds[MAX_CMD_LINE];
-
-extern int g_serverCmdCount;
-extern char *g_serverCmds[MAX_CMD_LINE];
+extern vector<string> g_blockedCmdss, g_serverCmdss;
 char com_token[1024];
 extern cvar_t *logsfiles;
 HL_MSG_ReadByte MSG_ReadByte = nullptr;
@@ -57,29 +50,9 @@ HOOKINIT(
 	ExecuteString_Tramp,							// the trampoline to the original function
 	ExecuteString_Prologue						// the prologue object of the function used for this hook
 )
-
 DWORD ExecuteString_call;
 DWORD ExecuteString_jump;
-
 EasyHook::Hook32 hooker; // an object meant to service you
-
-bool ParseList(const char *str) {
-	for (DWORD i = 0; i < g_blockedCmdCount; i++) {
-		if (!stricmp(str, g_blockedCmds[i])) {
-			return true;
-		}
-	}
-	return false;
-}//:D more shit code, in reborn no 
-
-bool ParseList2(const char *str) {
-	for (DWORD i = 0; i < g_serverCmdCount; i++) {
-		if (!stricmp(str, g_serverCmds[i])) {
-			return true;
-		}
-	}
-	return false;
-}
 
 int ParseListCvar(const char *str) {
 	auto found = FindCvar(str, Cvars);
@@ -91,14 +64,14 @@ bool IsCommandGood(const char *str) {
 	char *ret = g_Engine.COM_ParseFile((char *)str, com_token);
 	g_Engine.COM_ParseFile(com_token, com_token);//Cvars
 	if (ret == NULL || com_token[0] == 0)return true;
-	if ((ParseList(com_token)))return false;
+	if (std::find(g_blockedCmdss.begin(), g_blockedCmdss.end(), com_token) != g_blockedCmdss.end())return false;
 	return true;
 }
 
 bool IsCommandGood2(const char *str) {
 	char *ret = g_Engine.COM_ParseFile((char *)str, com_token);
 	if (ret == NULL || com_token[0] == 0)return true;
-	if ((ParseList2(com_token)))return false;
+	if (std::find(g_serverCmdss.begin(), g_serverCmdss.end(), com_token) != g_serverCmdss.end())return false;
 	return true;
 }
 
