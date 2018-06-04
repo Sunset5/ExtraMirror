@@ -19,7 +19,6 @@ vector<models_replace_s> models_list;
 vector<m_Cvar> Cvars;
 vector<string> g_blockedCmdss, g_anticheckfiless, g_serverCmdss;
 string filename;
-char ccmd[32];
 void HookEngineMessages(){
 	pEngineMsgBase = (PEngineMsg)offset.FindSVCMessages();
 	pSVC_StuffText = HookEngineMsg("svc_stufftext", SVC_StuffText);
@@ -55,14 +54,18 @@ void Credits(){
 	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Admrfsh\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Garey\n");
 }
-
+void SetCvarString(cvar_t *cvar, const char *value) {
+	char ccmd[32];
+	sprintf(ccmd, "%s %s", cvar->name, value);
+	g_Engine.pfnClientCmd(ccmd);
+}
 int Callback(const char *section, const char *key, const char *value,  void *userdata) {
 	if (lstrcmpA(section, "Settings") == 0) {
-		if(lstrcmpA(key,"steamid")==0)steamid_r = g_pEngine->pfnRegisterVariable("steamid", strdup(value), 0);
-		else if (lstrcmpA(key, "cust_hud") == 0)ex_thud = g_pEngine->pfnRegisterVariable("cust_hud", strdup(value), 0);
-		else if (lstrcmpA(key, "motd_block") == 0)motd_block = g_pEngine->pfnRegisterVariable("motd_block", strdup(value), 0);
-		else if (lstrcmpA(key, "logs") == 0)logsfiles = g_pEngine->pfnRegisterVariable("logs", strdup(value), 0);
-		else if (lstrcmpA(key, "events_block") == 0)events_block = g_pEngine->pfnRegisterVariable("events_block", strdup(value), 0);
+		if (lstrcmpA(key, "steamid") == 0)SetCvarString(steamid_r, value);
+		else if (lstrcmpA(key, "cust_hud") == 0)SetCvarString(ex_thud, value);
+		else if (lstrcmpA(key, "motd_block") == 0)SetCvarString(motd_block, value);
+		else if (lstrcmpA(key, "logs") == 0)SetCvarString(logsfiles, value);
+		else if (lstrcmpA(key, "events_block") == 0)SetCvarString(events_block, value);
 	}
 	else if (lstrcmpA(section, "ADetect")==0)g_anticheckfiless.push_back(key);
 	else if (lstrcmpA(section, "AutoInject") == 0)LoadLibrary(key);
@@ -75,11 +78,11 @@ int Callback(const char *section, const char *key, const char *value,  void *use
 }
 int CallbackUpd(const char *section, const char *key, const char *value,  void *userdata) {
 	if (lstrcmpA(section, "Settings") == 0) {
-		if (lstrcmpA(key, "steamid") == 0) { sprintf(ccmd, "steamid %s", value); g_Engine.pfnClientCmd(ccmd);}
-		else if (lstrcmpA(key, "cust_hud") == 0){sprintf(ccmd, "cust_hud %s", value); g_Engine.pfnClientCmd(ccmd);}
-		else if (lstrcmpA(key, "motd_block") == 0){sprintf(ccmd, "motd_block %s", value); g_Engine.pfnClientCmd(ccmd);}
-		else if (lstrcmpA(key, "logs") == 0){sprintf(ccmd, "logs %s", value); g_Engine.pfnClientCmd(ccmd);}
-		else if (lstrcmpA(key, "events_block") == 0){sprintf(ccmd, "events_block %s", value); g_Engine.pfnClientCmd(ccmd);}
+		if (lstrcmpA(key, "steamid") == 0)SetCvarString(steamid_r, value);
+		else if (lstrcmpA(key, "cust_hud") == 0)SetCvarString(ex_thud, value);
+		else if (lstrcmpA(key, "motd_block") == 0)SetCvarString(motd_block, value);
+		else if (lstrcmpA(key, "logs") == 0)SetCvarString(logsfiles, value);
+		else if (lstrcmpA(key, "events_block") == 0)SetCvarString(events_block, value);
 	}
 	else if (lstrcmpA(section, "ADetect")==0)g_anticheckfiless.push_back(key);
 	//else if (lstrcmpA(section, "AutoInject") == 0)LoadLibrary(key);
@@ -119,7 +122,7 @@ typedef enum cmd_source_s
 
 void InitHack(){
 	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.91\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.92\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
@@ -130,6 +133,11 @@ void InitHack(){
 	g_pEngine->pfnAddCommand("set_ticket", Set_Ticket);
 	g_pEngine->pfnAddCommand("update", Reload);
 	g_pEngine->pfnAddCommand("dump_cmd", DumpCmd);
+	steamid_r = g_pEngine->pfnRegisterVariable("steamid", "0", 0);
+	ex_thud = g_pEngine->pfnRegisterVariable("cust_hud", "0", 0);
+	motd_block = g_pEngine->pfnRegisterVariable("motd_block", "0", 0);
+	logsfiles = g_pEngine->pfnRegisterVariable("logs", "0", 0);
+	events_block = g_pEngine->pfnRegisterVariable("events_block", "0", 0);
 	ini_browse(Callback, NULL, g_settingsFileName);
 }
 
