@@ -112,6 +112,9 @@ void Reload(){
 	g_serverCmdss.clear();
 	g_anticheckfiless.clear();
 	ini_browse(CallbackUpd,NULL,g_settingsFileName);
+	sort(g_blockedCmdss.begin(), g_blockedCmdss.end());
+	sort(g_serverCmdss.begin(), g_serverCmdss.end());
+	sort(g_anticheckfiless.begin(), g_anticheckfiless.end());
 }
 
 typedef enum cmd_source_s
@@ -122,7 +125,7 @@ typedef enum cmd_source_s
 
 void InitHack(){
 	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.92\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.93\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
@@ -139,6 +142,9 @@ void InitHack(){
 	logsfiles = g_pEngine->pfnRegisterVariable("logs", "0", 0);
 	events_block = g_pEngine->pfnRegisterVariable("events_block", "0", 0);
 	ini_browse(Callback, NULL, g_settingsFileName);
+	sort(g_blockedCmdss.begin(), g_blockedCmdss.end());
+	sort(g_serverCmdss.begin(), g_serverCmdss.end());
+	sort(g_anticheckfiless.begin(), g_anticheckfiless.end());
 }
 
 void HookEventMessages(){

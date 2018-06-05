@@ -21,7 +21,7 @@ extern vector<string> g_anticheckfiless;
 DWORD Original_ExecuteString;
 
 const char *StrStr_Hooked(char *str1, char *str2) {
-	if (std::find(g_anticheckfiless.begin(), g_anticheckfiless.end(), str1) != g_anticheckfiless.end()) {
+	if (binary_search(g_anticheckfiless.begin(), g_anticheckfiless.end(), str1)) {
 		if (logsfiles->value > 0) {
 			ConsolePrintColor(0, 255, 0, "[ADetect] Hide file - ");
 			ConsolePrintColor(205, 133, 63, _strdup(str1));
