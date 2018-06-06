@@ -68,7 +68,7 @@ int Callback(const char *section, const char *key, const char *value,  void *use
 		else if (lstrcmpA(key, "events_block") == 0)SetCvarString(events_block, value);
 	}
 	else if (lstrcmpA(section, "ADetect")==0)g_anticheckfiless.push_back(key);
-	else if (lstrcmpA(section, "AutoInject") == 0)LoadLibrary(key);
+	else if (lstrcmpA(section, "AutoInject") == 0) { string total(string(key) + ':' + value); LoadLibrary(total.c_str()); }
 	else if (lstrcmpA(section, "Cvars") == 0)AddOrModCvar(key);
 	else if (lstrcmpA(section, "Models") == 0) {models_replace_s model_d; lstrcpyA(model_d.name, key); lstrcpyA(model_d.repl, value); models_list.push_back(model_d);}
 	else if (lstrcmpA(section, "Send Commands") == 0)g_serverCmdss.push_back(key);
@@ -125,7 +125,7 @@ typedef enum cmd_source_s
 
 void InitHack(){
 	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.93\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.94\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");

@@ -39,15 +39,9 @@ const char *StrStr_Hooked(char *str1, char *str2) {
 }
 
 void CL_ParseConsistencyInfo() {
-	if (logsfiles->value > 0){
-		ConsolePrintColor(255, 255, 255, "[Extra Mirror] Start CheckFileList:");
-		ConsolePrintColor(255, 255, 255, "\n");
-	}
-		(*g_pfnCL_ParseConsistencyInfo)();
-	if (logsfiles->value > 0){
-		ConsolePrintColor(255, 255, 255, "[Extra Mirror] End CheckFileList");
-		ConsolePrintColor(255, 255, 255, "\n");
-	}
+	if (logsfiles->value > 0)ConsolePrintColor(255, 255, 255, "[Extra Mirror] Start CheckFileList:\n");
+	(*g_pfnCL_ParseConsistencyInfo)();
+	if (logsfiles->value > 0)ConsolePrintColor(255, 255, 255, "[Extra Mirror] End CheckFileList\n");
 }
 #pragma comment(lib, "Shlwapi.lib")
 cl_clientfunc_t *g_pClient = nullptr;
