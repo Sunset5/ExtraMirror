@@ -493,8 +493,8 @@ int  ini_browse(INI_CALLBACK Callback, void *UserData, const TCHAR *Filename)
 	int new_val = 0;
 	/* not a new section, test for a key/value pair */
 	ep = _tcschr(sp, '=');    /* test for the equal sign or colon */
-	if (ep == NULL)
-		ep = _tcschr(sp, ':');
+	/*if (ep == NULL)
+		ep = _tcschr(sp, ':');*/
 	if (ep == NULL) {
 		ep = array;
 		new_val = 1;
