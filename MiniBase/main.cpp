@@ -93,37 +93,61 @@ string szDirFile2(char* pszName){
 	return (szRet + pszName);
 }
 
-void HexReplaceInLibrary(std::string libraryPath, std::string hexSearch, std::string hexReplace) {
+std::vector<uint8_t> HexToBytes(const std::string& hex) {
+	std::vector<uint8_t> bytes;
+
+	for (unsigned int i = 0; i < hex.length(); i += 2) {
+		std::string byteString = hex.substr(i, 2);
+		uint8_t byte = (uint8_t)strtol(byteString.c_str(), NULL, 16);
+		bytes.push_back(byte);
+	}
+
+	return bytes;
+}
+
+void HexReplaceInLibrary(std::string libraryPath, std::string hexSearch, std::string hexReplace, uint8_t wcard, uint64_t offset) {
+	const uint8_t wildcard = wcard;
+	auto search_comparator = [&wildcard](uint8_t val1, uint8_t val2)
+	{
+		return (val1 == val2 || (wildcard && val2 == wildcard));
+	};
+	auto replace_comparator = [&wildcard](uint8_t val, uint8_t val2)
+	{
+		if (!wildcard)
+			return val;
+		else if (val == wildcard)
+		{
+			return val2;
+		}
+
+		return val;
+	};
+
 	auto libraryAddress = GetModuleHandleA(libraryPath.c_str());
 	auto dosHeader = (IMAGE_DOS_HEADER *)libraryAddress;
 	auto peHeader = (IMAGE_NT_HEADERS *)((uintptr_t)libraryAddress + (uintptr_t)dosHeader->e_lfanew);
 
-	auto HexDigitToNum = [](char hexDigit) -> int { return ('0' <= hexDigit && hexDigit <= '9') ? (hexDigit - '0') : ((hexDigit - 'A') + 10); };
+	std::vector<uint8_t> searchbytes = HexToBytes(hexSearch);
+	std::vector<uint8_t> replacebytes = HexToBytes(hexReplace);
 
 	auto searchSize = hexSearch.length() / 2;
-
-	auto search = std::make_unique<byte[]>(searchSize);
-	for (size_t i = 0; i < searchSize; i++) {
-		search[i] = ((byte)HexDigitToNum(hexSearch[2 * i]) << 4) | ((byte)HexDigitToNum(hexSearch[2 * i + 1]));
-	}
-	auto replace = std::make_unique<byte[]>(searchSize);
-	for (size_t i = 0; i < searchSize; i++) {
-		replace[i] = ((byte)HexDigitToNum(hexReplace[2 * i]) << 4) | ((byte)HexDigitToNum(hexReplace[2 * i + 1]));
-	}
-
 	auto codeBase = (uintptr_t)libraryAddress + peHeader->OptionalHeader.BaseOfCode;
 	auto codeSize = peHeader->OptionalHeader.SizeOfCode;
 	auto codeEnd = codeBase + codeSize;
 	auto codeSearchEnd = codeEnd - searchSize + 1;
-
-	for (auto codePtr = codeBase; codePtr < codeSearchEnd; codePtr++) {
-		if (memcmp((const void *)codePtr, search.get(), searchSize) == 0) {
-			DWORD oldProt;
-			VirtualProtect((LPVOID)codePtr, searchSize, PAGE_EXECUTE_READWRITE, &oldProt);
-			memcpy((void *)codePtr, replace.get(), searchSize);
-			//                                                   wanna nullptr here
-			VirtualProtect((LPVOID)codePtr, searchSize, oldProt, &oldProt);
-		}
+	auto cstart = (uint8_t*)codeBase;
+	for (;;)
+	{
+		uint8_t* res = std::search(cstart, (uint8_t*)codeSearchEnd, searchbytes.begin(), searchbytes.end(), search_comparator);
+		if (res >= (uint8_t*)codeSearchEnd)
+		{
+			break;
+		}		
+		DWORD oldProt;
+		VirtualProtect((LPVOID)res, searchbytes.size(), PAGE_EXECUTE_READWRITE, &oldProt);
+		std::transform(replacebytes.begin(), replacebytes.end(), res + offset, res + offset, replace_comparator);
+		VirtualProtect((LPVOID)res, searchbytes.size(), oldProt, &oldProt);
+		cstart = res + searchbytes.size();
 	}
 }
 DWORD WINAPI CheatEntry( LPVOID lpThreadParameter )
@@ -598,15 +622,11 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 				return FALSE;
 			}
 			//unicode patch for console
-			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "241874128A0880F9057E03880A428A48", "241874128A0880F9057603880A428A48");
+			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "7ECC880A", "76CC880A", 0xCC, 0);
 			//1280x720<= tab avatar fixes
-			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "000300007C33E89724", "000100007C33E89724");
-			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "000300007C36E84C26", "000100007C36E84C26");
-			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "000300007C33E82128", "000100007C33E82128");
-			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "000300000F8C", "000100000F8C");
-			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "3D000300008B4424", "3D000100008B4424");
+			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "817C24CC00030000", "817C24CC01000000", 0xCC, 0);
 			//wad files download fix			
-			HexReplaceInLibrary("hw.dll", "1885C07403C600008D85", "1885C07414C600008D85");
+			HexReplaceInLibrary("hw.dll", "1885C07403C600008D85", "1885C07414C600008D85", 0, 0);
 			HMODULE hEngine = GetModuleHandle(TEXT("hw.dll"));
 			if (hEngine == NULL) {
 				hEngine = GetModuleHandle(TEXT("sw.dll"));
