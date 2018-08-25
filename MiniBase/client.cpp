@@ -53,6 +53,7 @@ void Credits(){
 	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Juice\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Admrfsh\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "Garey\n");
+	ConsolePrintColor(255, 255, 255, "-- Thank's to "); ConsolePrintColor(0, 255, 0, "s1lent\n");
 }
 void SetCvarString(cvar_t *cvar, const char *value) {
 	char ccmd[32];
@@ -125,7 +126,7 @@ typedef enum cmd_source_s
 
 void InitHack(){
 	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v2.96\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v3.0\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
@@ -186,7 +187,7 @@ void HUD_Frame(double time){
 	if (!FirstFrame){
 		g_Screen.iSize = sizeof(SCREENINFO);offset.HLType = g_Studio.IsHardware() + 1;offset.ConsoleColorInitalize();
 		offset.GetGameInfo(&BuildInfo);HookUserMessages();  HookEngineMessages();InitHack();FirstFrame = true;
-		HookEventMessages();
+		HookEventMessages();SearchPrintConsole();
 	}
 	g_Engine.pfnGetScreenInfo(&g_Screen);
 	g_Client.HUD_Frame(time);

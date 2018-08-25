@@ -167,6 +167,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="client.cpp" />
+    <ClCompile Include="colorconsole.cpp" />
     <ClCompile Include="enginemsg.cpp" />
     <ClCompile Include="eventmsg.cpp" />
     <ClCompile Include="main.cpp" />

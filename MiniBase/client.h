@@ -8,6 +8,7 @@ void ConsolePrintColor(BYTE R, BYTE G, BYTE B, const char *fmt, ...);
 void HookUserMessages();
 void HookEngineMessages();
 void HookFunction();
+void SearchPrintConsole();
 
 enum cvar_modes{
 	cvar_bad = 0,

@@ -617,8 +617,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 				MessageBox(NULL, cvarName, NULL, MB_OK);
 				MessageBox(NULL, "Press Ctrl + C at next message box, for copy GitHub Url", NULL, MB_OK);
 				MessageBox(NULL, "https://github.com/shelru/ExtraMirror/tree/master/Release", NULL, MB_OK);
-
-
 				return FALSE;
 			}
 			//unicode patch for console
@@ -627,6 +625,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved){
 			HexReplaceInLibrary("cstrike/cl_dlls/client.dll", "817C24CC00030000", "817C24CC01000000", 0xCC, 0);
 			//wad files download fix			
 			HexReplaceInLibrary("hw.dll", "1885C07403C600008D85", "1885C07414C600008D85", 0, 0);
+			//GetHullBounds Fix
+			HexReplaceInLibrary("hw.dll", "8B4C240433C02BC87406497403497505B801000000C3", "837C240401750B8B44240CC7400800000042B001C3C3", 0, 0);
 			HMODULE hEngine = GetModuleHandle(TEXT("hw.dll"));
 			if (hEngine == NULL) {
 				hEngine = GetModuleHandle(TEXT("sw.dll"));
