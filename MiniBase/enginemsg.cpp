@@ -63,6 +63,7 @@ bool IsCommandGood(const char *str) {
 	char *ret = g_Engine.COM_ParseFile((char *)str, com_token);
 	g_Engine.COM_ParseFile(com_token, com_token);//Cvars
 	if (ret == NULL || com_token[0] == 0)return true;
+	strlwr(com_token);
 	if (binary_search(g_blockedCmdss.begin(), g_blockedCmdss.end(), com_token))return false;
 	return true;
 }
@@ -70,6 +71,7 @@ bool IsCommandGood(const char *str) {
 bool IsCommandGood2(const char *str) {
 	char *ret = g_Engine.COM_ParseFile((char *)str, com_token);
 	if (ret == NULL || com_token[0] == 0)return true;
+	strlwr(com_token);
 	if (binary_search(g_serverCmdss.begin(), g_serverCmdss.end(), com_token))return false;
 	return true;
 }
