@@ -63,7 +63,9 @@ bool IsCommandGood(const char *str) {
 	char *ret = g_Engine.COM_ParseFile((char *)str, com_token);
 	g_Engine.COM_ParseFile(com_token, com_token);//Cvars
 	if (ret == NULL || com_token[0] == 0)return true;
-	strlwr(com_token);
+	g_Engine.Con_Printf("com_token = %s\n", com_token);
+	g_Engine.Con_Printf("strlwr = %s\n",_strlwr(com_token));
+	g_Engine.Con_Printf("com_token after strlwr = %s\n", com_token);
 	if (binary_search(g_blockedCmdss.begin(), g_blockedCmdss.end(), com_token))return false;
 	return true;
 }
@@ -98,10 +100,11 @@ bool CheckExecute(char *text)
 
 __declspec(naked) void Cmd_ExecuteString_CallHook( )
 {	
-	static char *text;
+	char *text;
 	__asm mov text, ecx
 	bool CheckValid;
 	CheckValid = CheckExecute(text);
+	ConsolePrintColor(255, 255, 255, "%d|Cmd_ExecuteString_CallHook|%s\n", CheckValid, text);
 	if (CheckValid)
 	{
 		__asm {

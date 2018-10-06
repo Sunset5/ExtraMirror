@@ -47,6 +47,9 @@ void Set_Ticket() {
 	filename = g_Engine.Cmd_Argv(1);
 	ConsolePrintColor(255, 255, 255, "[ExtraMirror] Ticket set -> \"%s\"\n", filename.c_str());
 }
+void sTeAmID() {
+	ConsolePrintColor(255, 255, 255, "[ExtraMirror] sTeAmID\n");
+}
 void Credits(){
 	ConsolePrintColor(255, 255, 255, "-- Thank's to");ConsolePrintColor(0, 255, 0, " [2010] Team\n");ConsolePrintColor(255, 255, 255, "-- Thank's to");
 	ConsolePrintColor(0, 255, 0, " madotsuki-team < *\n");ConsolePrintColor(255, 255, 255, "-- Thank's to ");ConsolePrintColor(0, 255, 0, "or_75\n");
@@ -131,7 +134,8 @@ void InitHack(){
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Spawner { Kiass }\n");
-	g_pEngine->pfnAddCommand("credits", Credits); 
+	//g_pEngine->pfnAddCommand("sTeAmID", sTeAmID);
+	g_pEngine->pfnAddCommand("cReDiTs", Credits); 
 	g_pEngine->pfnAddCommand("inject", Inject);	
 	g_pEngine->pfnAddCommand("modelsn", models);
 	g_pEngine->pfnAddCommand("set_ticket", Set_Ticket);
