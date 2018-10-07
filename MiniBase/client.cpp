@@ -72,9 +72,9 @@ int Callback(const char *section, const char *key, const char *value,  void *use
 	else if (lstrcmpA(section, "AutoInject") == 0) { LoadLibrary(key); }
 	else if (lstrcmpA(section, "Cvars") == 0)AddOrModCvar(key);
 	else if (lstrcmpA(section, "Models") == 0) {models_replace_s model_d; lstrcpyA(model_d.name, key); lstrcpyA(model_d.repl, value); models_list.push_back(model_d);}
-	else if (lstrcmpA(section, "Send Commands") == 0)g_serverCmdss.push_back(key);
+	else if (lstrcmpA(section, "Send Commands") == 0) { _strlwr((char*)key); g_serverCmdss.push_back(key); }
 	else if (lstrcmpA(section, "Custom Commands") == 0)g_pEngine->pfnAddCommand(strdup(key), DRC_CMD_NONE);
-	else if (lstrcmpA(section, "Commands") == 0)g_blockedCmdss.push_back(key);
+	else if (lstrcmpA(section, "Commands") == 0) {_strlwr((char*)key);g_blockedCmdss.push_back(key);}
 	return 1;
 }
 int CallbackUpd(const char *section, const char *key, const char *value,  void *userdata) {
@@ -89,9 +89,9 @@ int CallbackUpd(const char *section, const char *key, const char *value,  void *
 	//else if (lstrcmpA(section, "AutoInject") == 0)LoadLibrary(key);
 	else if (lstrcmpA(section, "Cvars") == 0)AddOrModCvar(key);
 	else if (lstrcmpA(section, "Models") == 0) {models_replace_s model_d; lstrcpyA(model_d.name, key); lstrcpyA(model_d.repl, value); models_list.push_back(model_d);}
-	else if (lstrcmpA(section, "Send Commands") == 0)g_serverCmdss.push_back(key);
+	else if (lstrcmpA(section, "Send Commands") == 0) { _strlwr((char*)key); g_serverCmdss.push_back(key); }
 	//else if (lstrcmpA(section, "Custom Commands") == 0)g_pEngine->pfnAddCommand(strdup(key), DRC_CMD_NONE);
-	else if (lstrcmpA(section, "Commands") == 0)g_blockedCmdss.push_back(key);
+	else if (lstrcmpA(section, "Commands") == 0) { _strlwr((char*)key); g_blockedCmdss.push_back(key); }
 	return 1;
 }
 void Inject(){LoadLibraryA(g_Engine.Cmd_Argv(1)); }
@@ -101,7 +101,7 @@ void DumpCmd(){
 	ConsolePrintColor(255, 255, 255, "Dump Commands: \n");
 	while (pCmd)
 	{
-		ConsolePrintColor(255,255,255, "%s \n", (char*)pCmd->name);
+		ConsolePrintColor(255,255,255, "%s\n", (char*)pCmd->name);
 		pCmd = pCmd->next;
 	}
 }
@@ -126,7 +126,7 @@ typedef enum cmd_source_s
 
 void InitHack(){
 	if (g_Engine.Con_IsVisible() == 0)g_Engine.pfnClientCmd("toggleconsole");
-	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v3.03\n");
+	ConsolePrintColor(0, 255, 11, "-- Extra Mirror v3.1\n");
 	ConsolePrintColor(255, 255, 255, "-- Use 'credits' for more information\n");
 	ConsolePrintColor(255, 255, 255, "-- Thank's to Realwar for title\n");    
 	ConsolePrintColor(255, 255, 255, "-- Thank's to FightMagister for functions\n");
@@ -250,7 +250,8 @@ void AddOrModCvar(const string line){
 	size_t start = line.find(' ');
 	// Set name 
 	temp.name = line.substr(0, start);
-	if (start != string::npos){		
+	_strlwr((char*)temp.name.c_str());
+	if (start != string::npos){
 		// Search second occurance of space char
 		size_t end = line.find(' ', start+1);
 		string Tag;
@@ -260,7 +261,7 @@ void AddOrModCvar(const string line){
 		if (Tag == "BAD") { temp.mode = cvar_bad; }
 		else if (Tag == "FAKE") { temp.mode = cvar_fake; }
 		else if (Tag == "SERVERSIDE") { temp.mode = cvar_open; }
-		else { /* UNKNOWN MODE WE SHOULD NOTIFY */ };
+		else { return;/* UNKNOWN MODE WE SHOULD NOTIFY */ };
 
 		// 
 		if (end != string::npos){
@@ -276,6 +277,7 @@ void AddOrModCvar(const string line){
 				}
 				else
 				{
+					return;
 					// Not closed quote :facepalm: notify?
 				}
 			}
@@ -291,6 +293,7 @@ void AddOrModCvar(const string line){
 					temp.default = Value;
 				}
 				else{
+					return;
 					// nope there no delimiter
 					// Should we notify?
 				}
@@ -299,6 +302,7 @@ void AddOrModCvar(const string line){
 		
 	}
 	else{
+		return;
 		// No delimiter??? wtf? Should we notify? possible todo
 	}
 	if (temp.mode == -1)temp.mode = cvar_fake; // todo: cvar for default mode
@@ -327,6 +331,8 @@ struct finder_cvar : std::unary_function<m_Cvar, bool> {
 // Search cvar by name in given vector
 ptrdiff_t FindCvar(string name, vector<m_Cvar> vec_cvar)
 {
+	_strlwr((char*)name.c_str());
+	//transform(name.begin(), name.end(), name.begin(), ::_tolower);
 	ptrdiff_t pos;
 	pos = std::find_if(vec_cvar.begin(), vec_cvar.end(), finder_cvar(name)) - vec_cvar.begin();
 	if (pos >= vec_cvar.size())

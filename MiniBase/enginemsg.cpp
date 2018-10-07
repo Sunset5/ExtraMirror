@@ -56,13 +56,14 @@ EasyHook::Hook32 hooker; // an object meant to service you
 int ParseListCvar(const char *str) {
 	auto found = FindCvar(str, Cvars);
 	if (found == -1)return -1;
-	else return Cvars[found].mode;
+	return Cvars[found].mode;
 }
 
 bool IsCommandGood(const char *str) {
 	char *ret = g_Engine.COM_ParseFile((char *)str, com_token);
 	g_Engine.COM_ParseFile(com_token, com_token);//Cvars
 	if (ret == NULL || com_token[0] == 0)return true;
+	_strlwr(com_token);
 	if (binary_search(g_blockedCmdss.begin(), g_blockedCmdss.end(), com_token))return false;
 	return true;
 }
@@ -70,6 +71,7 @@ bool IsCommandGood(const char *str) {
 bool IsCommandGood2(const char *str) {
 	char *ret = g_Engine.COM_ParseFile((char *)str, com_token);
 	if (ret == NULL || com_token[0] == 0)return true;
+	_strlwr(com_token);
 	if (binary_search(g_serverCmdss.begin(), g_serverCmdss.end(), com_token))return false;
 	return true;
 }
@@ -83,13 +85,11 @@ bool CheckExecute(char *text)
 	char *x = text;
 	if (!isGood2) {
 		g_Engine.pfnServerCmd(text);
-		if (logsfiles->value > 0) { ConsolePrintColor(24, 122, 224, "[Extra Mirror] server command sent: \""); ConsolePrintColor(24, 122, 224, ("%s", x)); ConsolePrintColor(24, 122, 224, "\"\n"); }
+		if (logsfiles->value > 0)ConsolePrintColor(24, 122, 224, "[Extra Mirror] server command sent: \"%s\"\n", x);
 	}
 	char *c = text;
-	char *a = isGood ? "[Extra Mirror] execute: \"" : "[Extra Mirror] blocked: \"";
-	if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); }
-	if (isSet)a = "[Extra Mirror] update server-side cvar: \"";
-	if (isSet) { if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, ("%s", a)); ConsolePrintColor(255, 255, 255, ("%s", c)); ConsolePrintColor(255, 255, 255, "\"\n"); } }
+	if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, "%s\"%s\"\n", isGood ? "[Extra Mirror] execute: " : "[Extra Mirror] blocked: ", c); }
+	if (isSet) { if (logsfiles->value > 0) { ConsolePrintColor(255, 255, 255, "[Extra Mirror] update server - side cvar : \"%s\"\n", c);  } }
 	if (isGood)return true;
 	return false;
 }
@@ -138,11 +138,7 @@ void SVC_SendCvarValue() {
 	if (pCvar != NULL) {
 		int mode = ParseListCvar(str);
 		if (mode == cvar_fake || mode == cvar_open) {
-			if (logsfiles->value > 0) {
-				ConsolePrintColor(255, 255, 255, "[Extra Mirror] request %s cvar: ", mode == cvar_fake ? "fake" : "open");
-				ConsolePrintColor(255, 255, 255, ("%s", cvar));
-				ConsolePrintColor(255, 255, 255, "\n");
-			}
+			if (logsfiles->value > 0)ConsolePrintColor(255, 255, 255, "[Extra Mirror] request %s cvar: %s\n", mode == cvar_fake ? "fake" : "open", str);
 			auto pos = FindCvar(str, Cvars);
 			char *old = pCvar->string;
 			pCvar->string = (char*)Cvars[pos].value.c_str();
@@ -151,11 +147,7 @@ void SVC_SendCvarValue() {
 			pCvar->string = old;
 		}
 		else if (mode == cvar_bad) {
-			if (logsfiles->value > 0) {
-				ConsolePrintColor(255, 255, 255, "[Extra Mirror] request blocked cvar: ");
-				ConsolePrintColor(255, 255, 255, ("%s", cvar));
-				ConsolePrintColor(255, 255, 255, "\n");
-			}
+			if (logsfiles->value > 0)ConsolePrintColor(255, 255, 255, "[Extra Mirror] request blocked cvar: %s\n", str);
 			char *old = pCvar->string;
 			pCvar->string = "Bad CVAR request";
 			MSG_RestoreReadCount();
@@ -163,20 +155,14 @@ void SVC_SendCvarValue() {
 			pCvar->string = old;
 		}
 		else {
-			if (logsfiles->value > 0) {
-				ConsolePrintColor(255, 255, 255, "[Extra Mirror] request cvar: ");
-				ConsolePrintColor(255, 255, 255, ("%s", cvar));
-				ConsolePrintColor(255, 255, 255, "\n");
-			}
+			if (logsfiles->value > 0)ConsolePrintColor(255, 255, 255, "[Extra Mirror] request cvar: %s\n", str);
 			MSG_RestoreReadCount();
 			pSVC_SendCvarValue();
 		}
 	}
 	else {
 		if (logsfiles->value > 0) {
-			ConsolePrintColor(255, 255, 255, "[Extra Mirror] request non-exist cvar: ");
-			ConsolePrintColor(255, 255, 255, (" %s", cvar));
-			ConsolePrintColor(255, 255, 255, "\n");
+			ConsolePrintColor(255, 255, 255, "[Extra Mirror] request non-exist cvar: %s\n", str);
 		}
 		MSG_RestoreReadCount();
 		pSVC_SendCvarValue();
@@ -193,11 +179,7 @@ void SVC_SendCvarValue2() {
 	if (pCvar != NULL) {
 		int mode = ParseListCvar(str);
 		if (mode == cvar_fake || mode == cvar_open) {
-			if (logsfiles->value > 0) {
-				ConsolePrintColor(255, 255, 255, "[Extra Mirror] request %s cvar2: ", mode == cvar_fake ? "fake" : "open");
-				ConsolePrintColor(255, 255, 255, ("%s", cvar));
-				ConsolePrintColor(255, 255, 255, "\n");
-			}
+			if (logsfiles->value > 0)ConsolePrintColor(255, 255, 255, "[Extra Mirror] request %s cvar2: %s\n", mode == cvar_fake ? "fake" : "open", str);
 			cvar_t *pCvar = g_Engine.pfnGetCvarPointer(str);
 			char *old = pCvar->string;
 			auto pos = FindCvar(str, Cvars);
@@ -207,11 +189,7 @@ void SVC_SendCvarValue2() {
 			pCvar->string = old;
 		}
 		else if (mode == cvar_bad) {
-			if (logsfiles->value > 0) {
-				ConsolePrintColor(255, 255, 255, "[Extra Mirror] request blocked cvar2: ");
-				ConsolePrintColor(255, 255, 255, ("%s", cvar));
-				ConsolePrintColor(255, 255, 255, "\n");
-			}
+			if (logsfiles->value > 0)ConsolePrintColor(255, 255, 255, "[Extra Mirror] request blocked cvar2: %s\n", str);
 			cvar_t *pCvar = g_Engine.pfnGetCvarPointer(str);
 			char *old = pCvar->string;
 			pCvar->string = "Bad CVAR request";
@@ -220,21 +198,13 @@ void SVC_SendCvarValue2() {
 			pCvar->string = old;
 		}
 		else {
-			if (logsfiles->value > 0) {
-				ConsolePrintColor(255, 255, 255, "[Extra Mirror] request cvar2: ");
-				ConsolePrintColor(255, 255, 255, ("%s", cvar));
-				ConsolePrintColor(255, 255, 255, "\n");
-			}
+			if (logsfiles->value > 0)ConsolePrintColor(255, 255, 255, "[Extra Mirror] request cvar2: %s\n", str);
 			MSG_RestoreReadCount();
 			pSVC_SendCvarValue2();
 		}
 	}
 	else {
-		if (logsfiles->value > 0) {
-			ConsolePrintColor(255, 255, 255, "[Extra Mirror] request non-exist cvar2: ");
-			ConsolePrintColor(255, 255, 255, (" %s", cvar));
-			ConsolePrintColor(255, 255, 255, "\n");
-		}
+		if (logsfiles->value > 0)ConsolePrintColor(255, 255, 255, "[Extra Mirror] request non-exist cvar2: %s\n", str);
 		MSG_RestoreReadCount();
 		pSVC_SendCvarValue2();
 	}
@@ -290,8 +260,7 @@ void SVC_VoiceInit() {
 	if (!stricmp(codec, "voice_miles") || !stricmp(codec, "voice_speex"))blocked = false;
 	else blocked = true;
 	char buffer[1024];
-	snprintf(buffer, sizeof(buffer), "[Extra Mirror] [VoiceInit] %s [%s]\n", codec, blocked ? "Blocked" : "Execute");
-	ConsolePrintColor(255, 255, 255, buffer);
+	ConsolePrintColor(255, 255, 255, "[Extra Mirror] [VoiceInit] %s [%s]\n", codec, blocked ? "Blocked" : "Execute");
 	if (blocked)return;
 	MSG_RestoreReadCount();
 	pSVC_VoiceInit();
